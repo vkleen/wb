@@ -635,10 +635,12 @@
         "pre-commit-hooks": "pre-commit-hooks_2"
       },
       "locked": {
-        "lastModified": 1667596346,
+        "lastModified": 1667639976,
         "narHash": "sha256-FWiz4DIbA0NmF8ly+Lhwng4QNa0yqIbRdpMBRy+mW1c=",
-        "type": "git",
-        "url": "file:///home/vkleen/work/tweag/monad-bayes"
+        "owner": "tweag",
+        "repo": "monad-bayes",
+        "rev": "90ccde80ba82095eb8099d73bb92044f98b78032",
+        "type": "github"
       },
       "original": {
         "owner": "tweag",

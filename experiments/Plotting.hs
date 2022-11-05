@@ -74,7 +74,7 @@ scatterplot ((xs, ys), cs) cE f mode =
         ]
 
 class Plottable a where
-  plot :: a -> VegaLiteLab
+  plot :: a -> Plot
 
 instance Plottable [((Double, Double), T.Text)] where
   plot ls =
@@ -120,4 +120,4 @@ instance Plottable [(T.Text, Double)] where
 instance Plottable [(Double, Double)] where
   plot ls = vlShow $ hist $ unzip ls
 
-type Plot = VegaLiteLab
+type Plot = IO ()

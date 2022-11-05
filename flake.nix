@@ -20,13 +20,7 @@
     pkgs = import inputs.nixpkgs {
       inherit system;
       config = {};
-      overlays = [(final: prev: {
-        haskell = prev.haskell // {
-          packageOverrides = lib.composeExtensions prev.haskell.packageOverrides (final.haskell.lib.packageSourceOverrides {
-            hlint = "3.5";
-          });
-        };
-      })];
+      overlays = [];
     };
 
     inherit (pkgs) lib haskell;
@@ -35,49 +29,45 @@
 
     name = "wb";
 
-    project = devTools:
-      let addBuildTools = (lib.trivial.flip haskell.lib.addBuildTools) devTools;
-      in haskell.packages.${compiler}.developPackage {
-        root = lib.sourceByRegex ./. [ "^package\.yaml$" ".*\.hs" ];
-        inherit name;
-        returnShellEnv = !(devTools == []);
+    source-overrides = {
+      vty = "5.37";
+      brick = "1.4";
+      bimap = "0.5.0";
+      text-zipper = "0.12";
+      hlint = "3.5";
+    };
 
-        source-overrides = {
-          vty = "5.37";
-          brick = "1.4";
-          bimap = "0.5.0";
-          text-zipper = "0.12";
-        };
+    overrides = final: prev: {
+      string-qq = haskell.lib.dontCheck prev.string-qq;
+      monad-bayes = haskell.lib.doJailbreak (final.callCabal2nix "monad-bayes" inputs.monad-bayes {});
+    };
 
-        overrides = final: prev: {
-          string-qq = haskell.lib.dontCheck prev.string-qq;
-          monad-bayes = haskell.lib.doJailbreak (final.callCabal2nix "monad-bayes" inputs.monad-bayes {});
-        };
 
-        modifier = (lib.trivial.flip lib.trivial.pipe) [
-          addBuildTools
-          haskell.lib.dontHaddock
-          haskell.lib.enableStaticLibraries
-          haskell.lib.justStaticExecutables
-          haskell.lib.disableLibraryProfiling
-          haskell.lib.disableExecutableProfiling
-        ];
-      };
+    hp = haskell.packages.${compiler}.extend
+      (lib.composeExtensions
+        (haskell.lib.packageSourceOverrides source-overrides)
+        overrides);
+
+    project = hp.callCabal2nixWithOptions name (lib.sourceByRegex ./. [ "^package\.yaml$" ".*\.hs" ]) "" {};
   in rec {
     packages = {
       default = packages.wb;
 
-      wb = project [];
+      wb = project;
     };
 
     devShells = {
       default = devShells.haskell;
 
       jupyter = inputs.monad-bayes.devShells.default;
-      haskell = project (with haskell.packages.${compiler}; [
-        cabal-fmt cabal-install hpack
-        haskell-language-server hlint
-      ]);
+      haskell = (hp.extend (_: _: { inherit (packages) wb; })).shellFor {
+        packages = p: [ p.wb ];
+        withHoogle = true;
+        nativeBuildInputs = with hp; [
+          cabal-install hpack hlint
+          haskell-language-server
+        ];
+      };
     };
   });
 }
