@@ -1,0 +1,10 @@
+name: wb
+version: 0.0.1
+
+dependencies:
+  - base
+  - monad-bayes
+
+executable:
+  main: Main.hs
+  source-dirs: exe
